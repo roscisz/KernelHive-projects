@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<kh:project name="ahive-md5">
+<kh:node hash="1478776682" id="26197235-2635-4910-91ef-7a77c3d76235" name="MD5" parent-id="" type="expandable" x="357" y="222">
+<kh:first-children-nodes/>
+<kh:send-to/>
+<kh:properties>
+<kh:property key="min" value="1"/>
+<kh:property key="max" value="10"/>
+</kh:properties>
+<kh:node-source-files>
+<kh:source-file id="2f227f1c-b8e2-414f-8439-e2237613488f" src="./26197235-2635-4910-91ef-7a77c3d76235/partition-kernel.cl">
+<kh:property key="outputSize" value="32"/>
+<kh:property key="globalSizes" value="4 1 1"/>
+<kh:property key="offsets" value="0"/>
+<kh:property key="numberOfDimensions" value="1"/>
+<kh:property key="role" value="partition"/>
+<kh:property key="localSizes" value="4 1 1"/>
+</kh:source-file>
+<kh:source-file id="a2a27ee8-f620-4860-9a0c-2bcb0339ab8a" src="./26197235-2635-4910-91ef-7a77c3d76235/merge-kernel.cl">
+<kh:property key="outputSize" value="32"/>
+<kh:property key="offsets" value="0"/>
+<kh:property key="globalSizes" value="4 1 1"/>
+<kh:property key="numberOfDimensions" value="1"/>
+<kh:property key="role" value="merge"/>
+<kh:property key="localSizes" value="4 1 1"/>
+</kh:source-file>
+<kh:source-file id="b9d587fd-ee13-4021-878e-9a2a549a5ea7" src="./26197235-2635-4910-91ef-7a77c3d76235/process-kernel.cl">
+<kh:property key="outputSize" value="32"/>
+<kh:property key="offsets" value="0"/>
+<kh:property key="globalSizes" value="4 1 1"/>
+<kh:property key="numberOfDimensions" value="1"/>
+<kh:property key="role" value="process"/>
+<kh:property key="localSizes" value="4 1 1"/>
+</kh:source-file>
+</kh:node-source-files>
+</kh:node>
+</kh:project>
