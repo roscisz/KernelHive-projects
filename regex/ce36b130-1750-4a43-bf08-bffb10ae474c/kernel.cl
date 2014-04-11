@@ -153,7 +153,6 @@ __kernel void processData(
         cp++;
     }
 
-/*
     barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
     // summing the results
     if(id == 0) {
@@ -162,5 +161,4 @@ __kernel void processData(
 	    sum += output[i];
     	output[0] = sum;
     }
-    */
 }
