@@ -31,13 +31,17 @@ void pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *
 	fprintf(stderr, "OpenCL Error (via pfn_notify): %s\n", errinfo);
 }
 
+void pfn_notify2(cl_program a, void *user_data)
+{
+	fprintf(stderr, "OpenCL Error (via pfn_notify2): %s\n", user_data);
+}
+
 int main(int argc, char **argv)
 {
 	if(argc < 2) {
 	    printf("%s <regex>\n", argv[0]);
 	    return 1;
 	}
-	
 
 	cl_platform_id platforms[100];
 	cl_uint platforms_n = 0;
@@ -81,25 +85,27 @@ int main(int argc, char **argv)
 
 	FILE *haystackHandle = fopen("data", "r");
 	fseek(haystackHandle, 0, SEEK_END);
-	size_t haystackSize = ftell(haystackHandle) - 1;
+	int haystackSize = ftell(haystackHandle) - 1;
 
 	rewind(haystackHandle);
 	
 	char *haystackBuffer = (char*) malloc(haystackSize);
 	fread(haystackBuffer, sizeof(char), haystackSize, haystackHandle);
 	fclose(haystackHandle);
-	printf("%d: %s\n", haystackSize, haystackBuffer);
+//	printf("%d: %s\n", haystackSize, haystackBuffer);
+	printf("%d\n", haystackSize);
 
 	const char *needleBuffer = argv[1];
-	size_t needleSize = strlen(needleBuffer);
-	printf("%d: %s\n", needleSize, needleBuffer);
+	int needleSize = strlen(needleBuffer);
+//	printf("%d: %s\n", needleSize, needleBuffer);
 
 	cl_mem input_buffer;
-	size_t input_buffer_size = 2*sizeof(size_t) + sizeof(char) * (haystackSize + needleSize);
+	int input_buffer_size = 2*sizeof(int) + sizeof(char) * (haystackSize + needleSize);
 	input_buffer = CL_CHECK_ERR(clCreateBuffer(context, CL_MEM_READ_ONLY, input_buffer_size, NULL, &_err));
 
 	cl_mem output_buffer;
-	size_t output_buffer_size = sizeof(int);
+	size_t nCores = 512;
+	int output_buffer_size = nCores * sizeof(int);
 	output_buffer = CL_CHECK_ERR(clCreateBuffer(context, CL_MEM_WRITE_ONLY, output_buffer_size, NULL, &_err));
 
 	cl_kernel kernel;
@@ -110,7 +116,8 @@ int main(int argc, char **argv)
 	CL_CHECK(clSetKernelArg(kernel, 2, sizeof(output_buffer), &output_buffer));
 	CL_CHECK(clSetKernelArg(kernel, 3, sizeof(output_buffer_size), &output_buffer_size));
 	int fakePreview;
-	CL_CHECK(clSetKernelArg(kernel, 4, sizeof(int), &fakePreview));
+        CL_CHECK(clSetKernelArg(kernel, 4, sizeof(int), &fakePreview));
+
 
 	cl_command_queue queue;
 	queue = CL_CHECK_ERR(clCreateCommandQueue(context, devices[0], 0, &_err));
@@ -121,16 +128,23 @@ int main(int argc, char **argv)
 	CL_CHECK(clEnqueueWriteBuffer(queue, input_buffer, CL_TRUE, sizeof(haystackSize) + sizeof(needleSize) + haystackSize, needleSize, needleBuffer, 0, NULL, NULL));
 
 	cl_event kernel_completion;
-	size_t global_work_size[3] = { 2, 1, 1 };
+	size_t global_work_size[3] = { 1, 1, 1 };
 	size_t local_work_size[3] = { 1, 1, 1 };
-	CL_CHECK(clEnqueueNDRangeKernel(queue, kernel, 3, NULL, global_work_size, local_work_size, 0, NULL, &kernel_completion));
+	CL_CHECK(clEnqueueNDRangeKernel(queue, kernel, 1, NULL, global_work_size, local_work_size, 0, NULL, &kernel_completion));
 	CL_CHECK(clWaitForEvents(1, &kernel_completion));
 	CL_CHECK(clReleaseEvent(kernel_completion));
 
 	printf("Result:");
+//		int data[nCores];
 		int data;
-		CL_CHECK(clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0, sizeof(int), &data, 0, NULL, NULL));
-		printf(" %d", data);
+	        CL_CHECK(clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0, sizeof(int), &data, 0, NULL, NULL));
+                printf(" %d", data);
+/*
+		CL_CHECK(clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0, nCores * sizeof(int), data, 0, NULL, NULL));
+		int i;
+		for(i = 0; i != 1; i++) 
+		    printf("%d: %d\n", i, data[i]);
+*/
 	printf("\n");
 
 	free(haystackBuffer);
