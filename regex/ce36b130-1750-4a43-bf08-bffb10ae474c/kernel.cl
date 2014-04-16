@@ -72,7 +72,7 @@ int match(MatchCase matchCase, CaseStack *stack, __global char *maxHaystack) {
 
     if(!*needle) return 0;    
     // FIXME (somehow sometimes it exceeds, why?):
-    if(s1 > maxHaystack - MAX_STACK) return 0;
+    //if(s1 > maxHaystack - MAX_STACK) return 0;
 
     s1 = haystack;
     haystackInd = 0;
@@ -132,7 +132,7 @@ __kernel void processData(
 
     output[id] = 0;
 
-    __global char*maxHaystack = haystack + haystackSize;
+    __global char *maxHaystack = haystack + haystackSize;
 
     __global char *cp = subHaystack;
     for(int offset = 0; offset != subHaystackOffsetSize; offset++) {
@@ -153,6 +153,7 @@ __kernel void processData(
         cp++;
     }
 
+/*
     barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
     // summing the results
     if(id == 0) {
@@ -161,4 +162,5 @@ __kernel void processData(
 	    sum += output[i];
     	output[0] = sum;
     }
+*/
 }

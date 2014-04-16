@@ -138,18 +138,14 @@ int main(int argc, char **argv)
 
 	CL_CHECK(clReleaseEvent(kernel_completion));
 
-	printf("Result:");
-//		int data[nThreads];
-		int data;
-	        CL_CHECK(clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0, sizeof(int), &data, 0, NULL, NULL));
-                printf(" %d", data);
-/*
-		CL_CHECK(clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0, nThreads * sizeof(int), data, 0, NULL, NULL));
-		int i;
-		for(i = 0; i != 1; i++) 
-		    printf("%d: %d\n", i, data[i]);
-*/
-	printf("\n");
+	int data[nThreads];
+	CL_CHECK(clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0, nThreads * sizeof(int), data, 0, NULL, NULL));
+	int i;
+	int result = 0;
+	for(i = 0; i != nThreads; i++) 
+		result += data[i];
+	    
+	printf("Result: %d\n", result);
 
 	free(dataBuffer);
 
