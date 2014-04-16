@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #define CL_CHECK(_expr)                                                         \
    do {                                                                         \
@@ -38,8 +39,8 @@ void pfn_notify2(cl_program a, void *user_data)
 
 int main(int argc, char **argv)
 {
-	if(argc < 2) {
-	    printf("%s <regex>\n", argv[0]);
+	if(argc < 3) {
+	    printf("%s <nThreads> <nThreadsInGroup>\n", argv[0]);
 	    return 1;
 	}
 
@@ -79,33 +80,30 @@ int main(int argc, char **argv)
 		fprintf(stderr, "CL Compilation failed:\n%s", buffer);
 		abort();
 	}
-	CL_CHECK(clUnloadCompiler());
+//	CL_CHECK(clUnloadCompiler());
 
 	free(programBuffer);
 
-	FILE *haystackHandle = fopen("data", "r");
-	fseek(haystackHandle, 0, SEEK_END);
-	int haystackSize = ftell(haystackHandle) - 1;
+	FILE *dataHandle = fopen("data", "r");
+	fseek(dataHandle, 0, SEEK_END);
+	int dataSize = ftell(dataHandle) - 1;
 
-	rewind(haystackHandle);
+	rewind(dataHandle);
 	
-	char *haystackBuffer = (char*) malloc(haystackSize);
-	fread(haystackBuffer, sizeof(char), haystackSize, haystackHandle);
-	fclose(haystackHandle);
-//	printf("%d: %s\n", haystackSize, haystackBuffer);
-	printf("%d\n", haystackSize);
+	char *dataBuffer = (char*) malloc(dataSize);
+	fread(dataBuffer, sizeof(char), dataSize, dataHandle);
+	fclose(dataHandle);
 
-	const char *needleBuffer = argv[1];
-	int needleSize = strlen(needleBuffer);
-//	printf("%d: %s\n", needleSize, needleBuffer);
+	int nThreads = atoi(argv[1]);
+	int nThreadsInGroup = atoi(argv[2]);
+	printf("nThreads: %d, nThreadsInGroup: %d\n", nThreads, nThreadsInGroup);
 
 	cl_mem input_buffer;
-	int input_buffer_size = 2*sizeof(int) + sizeof(char) * (haystackSize + needleSize);
+	int input_buffer_size = dataSize;
 	input_buffer = CL_CHECK_ERR(clCreateBuffer(context, CL_MEM_READ_ONLY, input_buffer_size, NULL, &_err));
 
 	cl_mem output_buffer;
-	size_t nCores = 512;
-	int output_buffer_size = nCores * sizeof(int);
+	int output_buffer_size = nThreads * sizeof(int);
 	output_buffer = CL_CHECK_ERR(clCreateBuffer(context, CL_MEM_WRITE_ONLY, output_buffer_size, NULL, &_err));
 
 	cl_kernel kernel;
@@ -122,32 +120,38 @@ int main(int argc, char **argv)
 	cl_command_queue queue;
 	queue = CL_CHECK_ERR(clCreateCommandQueue(context, devices[0], 0, &_err));
 
-	CL_CHECK(clEnqueueWriteBuffer(queue, input_buffer, CL_TRUE, 0, sizeof(haystackSize), &haystackSize, 0, NULL, NULL));
-	CL_CHECK(clEnqueueWriteBuffer(queue, input_buffer, CL_TRUE, sizeof(haystackSize), sizeof(needleSize), &needleSize, 0, NULL, NULL));
-	CL_CHECK(clEnqueueWriteBuffer(queue, input_buffer, CL_TRUE, sizeof(haystackSize) + sizeof(needleSize), haystackSize, haystackBuffer, 0, NULL, NULL));
-	CL_CHECK(clEnqueueWriteBuffer(queue, input_buffer, CL_TRUE, sizeof(haystackSize) + sizeof(needleSize) + haystackSize, needleSize, needleBuffer, 0, NULL, NULL));
+	CL_CHECK(clEnqueueWriteBuffer(queue, input_buffer, CL_TRUE, 0, dataSize, dataBuffer, 0, NULL, NULL));
 
 	cl_event kernel_completion;
-	size_t global_work_size[3] = { 1, 1, 1 };
-	size_t local_work_size[3] = { 1, 1, 1 };
+	size_t global_work_size[3] = { nThreads, 1, 1 };
+	size_t local_work_size[3] = { nThreadsInGroup, 1, 1 };
+
+	struct timeval start, end;
+
+	gettimeofday(&start, NULL);
+
 	CL_CHECK(clEnqueueNDRangeKernel(queue, kernel, 1, NULL, global_work_size, local_work_size, 0, NULL, &kernel_completion));
 	CL_CHECK(clWaitForEvents(1, &kernel_completion));
+
+        gettimeofday(&end, NULL);
+	printf("Time: %d\n", end.tv_sec - start.tv_sec);
+
 	CL_CHECK(clReleaseEvent(kernel_completion));
 
 	printf("Result:");
-//		int data[nCores];
+//		int data[nThreads];
 		int data;
 	        CL_CHECK(clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0, sizeof(int), &data, 0, NULL, NULL));
                 printf(" %d", data);
 /*
-		CL_CHECK(clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0, nCores * sizeof(int), data, 0, NULL, NULL));
+		CL_CHECK(clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0, nThreads * sizeof(int), data, 0, NULL, NULL));
 		int i;
 		for(i = 0; i != 1; i++) 
 		    printf("%d: %d\n", i, data[i]);
 */
 	printf("\n");
 
-	free(haystackBuffer);
+	free(dataBuffer);
 
 	CL_CHECK(clReleaseMemObject(input_buffer));
 	CL_CHECK(clReleaseMemObject(output_buffer));
