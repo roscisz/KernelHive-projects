@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<kh:project name="idw">
+<kh:node hash="-1195871177" id="ce36b130-1750-4a43-bf08-bffb10ae474c" name="name1" parent-id="" type="DataProcessor" x="247" y="126">
+<kh:first-children-nodes/>
+<kh:send-to/>
+<kh:properties/>
+<kh:node-source-files>
+<kh:source-file id="bc0514aa-1716-46b1-8d5f-5a33dbf9f677" src="ce36b130-1750-4a43-bf08-bffb10ae474c/kernel.cl">
+<kh:property key="outputSize" value="8000000"/>
+<kh:property key="offsets" value="0 0 0"/>
+<kh:property key="globalSizes" value="8 1 1"/>
+<kh:property key="numberOfDimensions" value="3"/>
+<kh:property key="localSizes" value="512 1 1"/>
+</kh:source-file>
+</kh:node-source-files>
+</kh:node>
+</kh:project>
